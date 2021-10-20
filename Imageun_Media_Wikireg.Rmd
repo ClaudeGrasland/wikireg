@@ -16,6 +16,18 @@ library(knitr)
 
 ## INTRODUCTION
 
+Previous analysis on german (*left*) and french (*right*) newspapers has demonstrated the interest to analyse **networks of states and world regions** :
+
+```{r,  out.width="50%"}
+knitr::include_graphics("pics/net_frankf_2014_2019.png")
+knitr::include_graphics("pics/net_lmonde_2014_2019.png")
+```
+
+But before to validate this results we need : 
+
+1. to clarify our **definition of world regions** and the associated list of target units.
+2. to enlarge the dictionary to **other languages** (turkish, arabic, english)
+
 ## Objectives
 
 The objective of this short note is to explore the possibility of **Wikidata** for the production of multilingual dictionaries of world regions and more generally regional imaginations. In order to test the interest of this approach, we will try to produce multilingual dictionaries for the identification of five groups of entities :
