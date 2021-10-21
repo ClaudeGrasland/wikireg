@@ -14,11 +14,9 @@ knitr::opts_chunk$set(echo = FALSE)
 library(knitr)
 ```
 
-## INTRODUCTION
+## 1. INTRODUCTION
 
-<<<<<<< HEAD
-## Looking for regions
-=======
+
 Previous analysis on german (*left*) and french (*right*) newspapers has demonstrated the interest to analyse **networks of states and world regions** :
 
 ```{r,  out.width="50%"}
@@ -32,7 +30,7 @@ But before to validate this results we need :
 2. to enlarge the dictionary to **other languages** (turkish, arabic, english)
 
 ## Objectives
->>>>>>> e590d9ed1965feaa713007e9b0efe63a2912a6b0
+
 
 The objective of this short note is to explore the possibility of **Wikidata** for the production of multilingual dictionaries of world regions and more generally regional imaginations. In order to test the interest of this approach, we will try to produce multilingual dictionaries for the identification of different types of "regions" related to the division of the **Earth** ("natural") or the division of the **World** ("political")
 
@@ -125,9 +123,8 @@ knitr::include_graphics("pics/Lexicuniv.png")
 The comparison between lexical universes will be necessarily limited to a small sample of entities for which we can assume that the entities are approximately equivalent.  
 
 
-## WIKIDATA 
+## 2. WIKIDATA 
 
-## What is Wikidata ?
 
 [Wikidata](https://www.wikidata.org/wiki/Wikidata:Main_Page) defines itself as
 
@@ -208,7 +205,7 @@ but rather equivalent to the two joint questions
 - Is the textual unit **"Afrique"** more mentionned than the textual unit **"Europe"** in Tunisian newspapers published **in french language**.
 - Is the textual unit **"إفريقيا"** more mentionned than the textual unit **"أوروبا"** in Tunisian newspapers published **in arabic language**.
 
-## EXPERIMENT
+## 3. EXPERIMENT
 
 We propose a **semi-automatic** method of extractions of entities in different languages that implies the presence of **human expert** at each step of the analysis. The figure below describe an example of research of world regions related to Africa in three languages. 
 
