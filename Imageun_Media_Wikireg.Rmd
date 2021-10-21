@@ -1,11 +1,11 @@
 ---
-title: "World regions based on Wikidata"
-author: "Claude Grasland"
+title: "Cross-language analysis of world regions in the press"
+author: "Claude Grasland & Etienne Toureille"
 date: "19/10/2021"
 output:
   slidy_presentation:
     footer: "Imageun Project - Media Group - 2021"
-subtitle: Toward a multilanguage ontology ?
+subtitle: An empirical approach based on Wikidata
 bibliography: references.bib
 ---
 
@@ -16,29 +16,100 @@ library(knitr)
 
 ## INTRODUCTION
 
-## Objectives
+## Looking for regions
 
-The objective of this short note is to explore the possibility of **Wikidata** for the production of multilingual dictionaries of world regions and more generally regional imaginations. In order to test the interest of this approach, we will try to produce multilingual dictionaries for the identification of five groups of entities :
+The objective of this short note is to explore the possibility of **Wikidata** for the production of multilingual dictionaries of world regions and more generally regional imaginations. In order to test the interest of this approach, we will try to produce multilingual dictionaries for the identification of different types of "regions" related to the division of the **Earth** ("natural") or the division of the **World** ("political")
 
--   Europe and its subregions
--   Africa and its subregions
--   Asia and its subregions
--   America and its subregions
--   Mediterranea, Middle East, Near East, Persian Gulf ...
+- **"Earth/Natural regions"** : i.e. regions that are used in Atlas of Dictionaries for the localization at the surface on the earth and/or taught to young students in textbook as primary or secondary divisions of the surface of the Earth.
 
-## Objectives
+- **"World/Political regions"** : i.e. groups of states that are linked by formal  international organization (e.g. European Union, ASEAN, ...) and/or are perceived as linked politically or economically by themselves of in the eye of external observers (e.g. BRICS, Eurasia)
 
-The dictionary will be established in five languages of interest for the project IMAGEUN :
+## Earth/Natural regions: Atlas
 
--   english : applied to media of UK and Ireland
--   french : applied to media of France and Tunisia
--   german : applied to media of Germany
--   turkish : applied to media of Turkey
--   arabic : applied to media of Tunisia
+So-called "Physical maps" in Atlas are a good source :
 
-We want to avoid any *"eurocentric"* or *"anglocentric"* perspective in the definition of entities.
+```{r,out.width="70%"}
+knitr::include_graphics("pics/Earthreg.png")
+```
 
-## WIKIDATA AS ONTOLOGY
+- **continents** : Asia, Africa, Europa, ...
+- **subcontinents** : North Africa, Western Europe,..
+- **peninsula/ archipel/ ...** : Scandinavia, Caraïbes, ...
+- **bioclimatic area** : Sahara, Amazonia, Sahel
+- **mountains/plain/...** : Alps, Balkans, Ands, ...
+- **Oceans/Seas/Gulf** : Atlantic, Arctic, Mediterranea
+
+
+## Earth/natural regions : Textbooks
+
+Textbooks and educative games for children are also crucial : 
+
+```{r,out.width="45%"}
+knitr::include_graphics("pics/Cont_school2.png")
+knitr::include_graphics("pics/Cont_school3.png")
+knitr::include_graphics("pics/Cont_school4.png")
+knitr::include_graphics("pics/Cont_school5.png")
+```
+
+
+
+## World/Political regions : IGO
+
+```{r,out.width="45%"}
+knitr::include_graphics("pics/Orgs_Map_1.png")
+knitr::include_graphics("pics/Orgs_Map_2.png")
+knitr::include_graphics("pics/Orgs_Map_3.png")
+knitr::include_graphics("pics/Orgs_Map_4.png")
+```
+
+An attempt to classify intergovernmental organization in 4 types :
+
+1. Continental organizations
+2. Subcontinental organizations
+3. Transcontinental alliances
+4. Heritage of empires
+
+Source : https://commons.wikimedia.org/wiki/Atlas_of_international_organizations
+
+## World/Political regions : Other ...
+
+```{r,out.width="45%"}
+knitr::include_graphics("pics/Huntington_1.png")
+knitr::include_graphics("pics/Huntington_2.png")
+knitr::include_graphics("pics/eurasia-map.jpg")
+knitr::include_graphics("pics/UPM carte.jpg")
+```
+
+
+## A cross-language perspective
+
+We propose to etablish a dictionary of Earth and World Regions in the five languages of interest for the project IMAGEUN :
+
+-   **english** : applied to media of UK and Ireland
+-   **french** : applied to media of France and Tunisia
+-   **german** : applied to media of Germany
+-   **turkish** : applied to media of Turkey
+-   **arabic** : applied to media of Tunisia
+
+We want to avoid any *"eurocentric"* or *"anglocentric"* perspective in the definition of entities. Therefore our definition of entities will follow the following rules :
+
+1. **Non universal** : Entities will not necessary be available in all languages
+2. **Non equivalent** :  Translation of names does not imply equivalence of entities
+3. **Non hierarchic** : An entity has different definitions in each language. None of the language can be considered as "pivot" or "reference". 
+
+## Entities equivalences and lexical universes
+
+To summarize, we propose to build **partial equivalences** between entities that belong to **different lexical universes**.
+
+```{r,out.width="85%"}
+knitr::include_graphics("pics/Lexicuniv.png")
+
+```
+
+The comparison between lexical universes will be necessarily limited to a small sample of entities for which we can assume that the entities are approximately equivalent.  
+
+
+## WIKIDATA 
 
 ## What is Wikidata ?
 
@@ -106,7 +177,7 @@ The **existence of the same code of wikipedia entities does not offer any guaran
 
 - **Ex.2 Proche-Orient/Moyen-Orient/Pays du Golfe/ Asie de l'Ouest** : In french language we find four entities describing the complex geopolitical area located in western part of Asia and eastern part of Mediterranea. But this entities are not necessary used in all languages with the same frequency and can be completed by other entities like western Asia. The entity  *Proche-Orient* (**Q48214**) which is frequent in french is only available in 30 languages when the *Moyen-Orient* (**Q7204**) is available in 84 languages,  *golfe Persique* (**Q34675**) in 77 languages and *Asie de l'Ouest* (**Q27293**) in 71 languages. 
 
-## Cross-language experiments
+## Cross-language perspective
 
 Having in mind the limits of the equivalence of entities across languages, it can nevertheless be an interesting experience to select a set of wikipedia entities (**Q15, Q258, Q4412** ...) and to examine their relative frequency in our different media from different countries with different languages. A typical hypothesis could be something like :
 
@@ -121,7 +192,16 @@ but rather equivalent to the two joint questions
 - Is the textual unit **"Afrique"** more mentionned than the textual unit **"Europe"** in Tunisian newspapers published **in french language**.
 - Is the textual unit **"إفريقيا"** more mentionned than the textual unit **"أوروبا"** in Tunisian newspapers published **in arabic language**.
 
-## CREATION OF THE DICTIONARY
+## EXPERIMENT
+
+We propose a **semi-automatic** method of extractions of entities in different languages that implies the presence of **human expert** at each step of the analysis. The figure below describe an example of research of world regions related to Africa in three languages. 
+
+
+```{r, out.width="95%"}
+knitr::include_graphics("pics/Wikidata.png")
+```
+
+
 
 ## The package WikidataR
 
@@ -212,6 +292,11 @@ The analysis of the list of result reveals four situations :
 3. **Ambiguous entities** : Some entities are ambiguous because they are not regions but use exactly the same textual units than a target entity. It is for example the case of the roman province of Africa (**Q181238**) which can not be easily differentiated from the continent, except by manual inspection. This units are not easy to control but fortunately are generally not frequent.
 
 4. **Insignificant entities** : Those entities that are exceptional inthe corpus can be simply gnored. 
+
+
+
+
+
 
 
 ## Bibliography
