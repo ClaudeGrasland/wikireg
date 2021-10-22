@@ -10,8 +10,16 @@ bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE)
 library(knitr)
+library(tidytext, quietly = TRUE)
+library(dplyr, quietly=TRUE)
+library(quanteda)
+library(quanteda.textplots)
+library(quanteda.textmodels)
+library(stringr)
+library(data.table)
+library(FactoMineR)
 ```
 
 ## 1. INTRODUCTION
@@ -137,7 +145,7 @@ The comparison between lexical universes will be necessarily limited to a small 
 
 The first interest of wikidata is to provide unique code of identifications of objects. For example a research about "Africa" will produce a list of different objects characterized by a unique code :
 
-```{r}
+```{r,out.width="85%"}
 knitr::include_graphics("pics/Wikidata001.png")
 ```
 
@@ -145,7 +153,7 @@ knitr::include_graphics("pics/Wikidata001.png")
 
 Once we have selected an entity (e.g. **Q15**) we obtain a new page with more detailed informations in english but also in all other languages available in Wikipedia.
 
-```{r}
+```{r,out.width="85%"}
 knitr::include_graphics("pics/Wikidata002.png")
 ```
 
@@ -205,18 +213,9 @@ but rather equivalent to the two joint questions
 - Is the textual unit **"Afrique"** more mentionned than the textual unit **"Europe"** in Tunisian newspapers published **in french language**.
 - Is the textual unit **"إفريقيا"** more mentionned than the textual unit **"أوروبا"** in Tunisian newspapers published **in arabic language**.
 
-## 3. EXPERIMENT
-
-We propose a **semi-automatic** method of extractions of entities in different languages that implies the presence of **human expert** at each step of the analysis. The figure below describe an example of research of world regions related to Africa in three languages. 
 
 
-```{r, out.width="95%"}
-knitr::include_graphics("pics/Wikidata.png")
-```
-
-
-
-## The package WikidataR
+## Boring details
 
 The package [WikidataR](https://cran.r-project.org/web/packages/WikidataR/WikidataR.pdf) is an interface for the use of the Wikidata API in R language. Equivalent tools are available in Python and other languages for those non familiar with R. And it is of course possible to use directly the API. The first step is to install the most recent version of the R package `WikidataR` which install also related packages of interest.
 
@@ -226,7 +225,7 @@ library(WikidataR)
 ```
 
 
-## Extraction of entities
+## Boring details
 
 If we start our research with the **word**  "*Afrique*" in french language we find more than 50 **entities** that contain this word in their **label**. Only the first 10 are presented below : 
 
@@ -293,7 +292,7 @@ tab <- extract_entities("Afrique","fr",10)
 kable(tab)
 ```
 
-## Selection of entities
+## Boring details
 
 The analysis of the list of result reveals four situations :
 
@@ -307,7 +306,631 @@ The analysis of the list of result reveals four situations :
 4. **Insignificant entities** : Those entities that are exceptional inthe corpus can be simply gnored. 
 
 
+## Workflow in a nutschell
 
+We propose a **semi-automatic** method of extractions of entities in different languages that implies the presence of **human expert** at each step of the analysis. The figure below describe an example of research of world regions related to Africa in three languages. 
+
+
+```{r, out.width="95%"}
+knitr::include_graphics("pics/Wikidata.png")
+```
+
+The programs used for computer implementation are explained in the  **media cookbook** on [github](https://github.com/ClaudeGrasland/media_cookbook) with an example of implementation available onf the following [page](https://claudegrasland.github.io/media_cookbook/23-Wikidata.html)
+
+
+## 3. Q & D EXPERIMENTS
+
+We have realized a test of the previous workflow on an **arbitraty selection of entities** which are mainly related to **continent and "natural" Earth divisions** :  
+
+- *continents* : Asia, Africa, Europa, ...
+- *subcontinents* : North Africa, Western Europe,..
+- *peninsula/ archipel/ ...* : Scandinavia, Caraïbes, ...
+- *bioclimatic area* : Sahara, Amazonia, Sahel
+- *mountains/plain/...* : Alps, Balkans, Ands, ...
+- *Oceans/Seas/Gulf* : Atlantic, Arctic, Mediterranea, ...
+
+This **quick and dirty** analysis does not offer any guarantee of quality because :
+
+1. The list of entities has not been discussed by the IMAGEUN's partners
+2. The dictionary established in the different languages has not been controled by native speakers
+
+The purpose is therefore only to provide **food for thought**. 
+
+## Data 
+
+We start from a corpus of text where target wikipedia entities has been recognized :
+
+
+```{r, warning=F}
+
+qd<-readRDS("quanteda/corpus_worldreg_001.RDS")
+qd<-corpus_subset(qd,nbregs>0)
+td<-tidy(qd)
+td <-td[order(td$nbregs,decreasing = T),]
+kable(head(td,10))
+```
+## Experience 1 : An **Inter-**Language analysis of lexical universes
+
+```{r, out.width="85%"}
+knitr::include_graphics("pics/Experience1.png")
+```
+
+
+## Experience 1 : Europe (Q46)  in  2019 
+
+```{r, out.width="40%"}
+ent = "Q46"
+year = 2019
+qd2<-corpus_subset(qd,str_count(regs,ent)>0 & substr(date,1,4)==year) 
+
+
+lang="fr"
+country = "FRA"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2) 
+
+
+
+lang="de"
+country="DEU"
+mystop="german"
+year=2019
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+lang="fr"
+country = "TUN"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2) 
+
+
+
+lang="tr"
+country="TUR"
+mystop="french"
+year= 2019
+
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+
+```
+
+## Experience 1 : Europe (Q46) in  2020 
+
+```{r, out.width="40%"}
+ent = "Q46"
+year = 2020
+qd2<-corpus_subset(qd,str_count(regs,ent)>0 & substr(date,1,4)==year) 
+
+
+lang="fr"
+country = "FRA"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2) 
+
+
+lang="de"
+country="DEU"
+mystop="german"
+year=2019
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+lang="fr"
+country = "TUN"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2) 
+
+
+
+lang="tr"
+country="TUR"
+mystop="french"
+year= 2019
+
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+
+```
+
+
+
+## Experience 1 : Mediterranea (Q4918) in 2019-2021 
+
+```{r, out.width="40%"}
+ent = "Q4918"
+#year = 2020
+qd2<-corpus_subset(qd,str_count(regs,ent)>0 ) 
+
+
+lang="fr"
+country = "FRA"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+
+lang="de"
+country="DEU"
+mystop="german"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+lang="fr"
+country = "TUN"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2) 
+
+
+
+lang="tr"
+country="TUR"
+mystop="french"
+year= 2019
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+
+```
+
+## Experience 2 : A **Cross-**Language analysis of regional entities
+
+```{r, out.width="85%"}
+knitr::include_graphics("pics/Experience2.png")
+```
+
+
+## Experience 2 : Data aggregation
+
+For the experience 2, we create a new object called **hypercube** where the text of news has been removed and where we keep only the number of *tags* or proportion of *news* speaking from one or several regions (*where1*, *where2*), by media (*who*) and by time period (*when*)
+
+```{r}
+
+
+hypercube <-function(qd = qd,
+                     when = "date",
+                     when_cut = "year",
+                     who = "source",
+                     where1 = "tags",
+                     where2 = "tags")
+                     
+  {   
+
+# create data.table accroding to parameter chosen
+  don<-docvars(qd)
+
+  df<-data.table(id = docid(qd),
+                 who = don[,who],
+                 when = as.character(cut(don[,when],breaks=when_cut)),
+                 where1 = don[,where1],
+                 where2 = don[,where2])
+
+
+
+# add code _no_ for empty fields
+df$where1[df$where1==""]<-"_no_"
+df$where2[df$where2==""]<-"_no_"
+
+
+# unnest where1
+  df<-unnest_tokens(df,where1,where1,to_lower=F)
+  
+# unnest where2
+  df<-unnest_tokens(df,where2,where2,to_lower=F)  
+  
+# define number of occurence by id
+  nb<-df[,.N,list(id)] %>%  mutate(wgt = 1/N) %>% select(-N)
+  df<-df %>% left_join(nb) 
+  
+  rm(nb)
+ 
+# Aggregate
+  hc<- df[,.( tags = .N, news=sum(wgt)) ,.(who, when,where1,where2)]
+  
+# Convert date to time
+  hc$when<-as.Date(hc$when)
+  
+# return hypercube
+  return(hc)
+
+}
+
+
+
+hc_reg <- hypercube(qd = qd,
+                     when = "date",
+                     when_cut = "year",
+                     who = "source",
+                     where1 = "regs",
+                     where2 = "regs")
+eliminate<-c("Q828", "Q12824780", "Q27394")
+hc_reg<-hc_reg[!(where1 %in% eliminate),]
+
+sel<-hc_reg[where1=="Q46" & where2=="Q15",]
+kable(sel)
+
+reg_def<-readRDS("dict/worldreg001_def.RDS")
+tab_def<-dcast(reg_def, formula =id~lang, value.var="label")
+tab_def<-tab_def[ ,-c(2)]
+#kable(head(tab_def))
+
+```
+
+## Experience 2 : Top 20 regions in full corpus
+
+We can propose firstly a table of top entities in the whole corpus of newspapers.
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(where1)] 
+df<-merge(tab_def,df,by.x="id",by.y="where1",all.x=F,all.y=T)
+df<-df[order(df$nb, decreasing = T),]
+row.names(df)<-1:dim(df)[1]
+
+kable(head(df,20), digits=0,row.names = T)
+```
+
+- **NB** :  all the names are present in the different languages in order to avoid *eurocentrism* or *anglocentrism*. 
+
+
+
+
+## Experience 2 : Turkish newspapers - Top 10 regions
+
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="tr",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6)=="TUR", rnk < 11)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:10,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:10,c(3,4)]
+names(tab2)<-c(paste("Cumhuryet","Region",sep="_"),paste("Cumhuryet","pct",sep=" "))
+tab3<-res[11:20,c(3,4)]
+names(tab3)<-c(paste("Yeni Savas","Region",sep="_"),paste("Yeni Savas","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3)
+
+kable(tab,digits=1, row.names = F)
+
+```
+
+## Experience 2 : German newspapers - Top 10 regions
+
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="de",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6)=="DEU", rnk < 11)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:10,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:10,c(3,4)]
+names(tab2)<-c(paste("FAZ","Region",sep="_"),paste("FAZ","pct",sep=" "))
+tab3<-res[11:20,c(3,4)]
+names(tab3)<-c(paste("Süd. Zeit.","Region",sep="_"),paste("Süd. Zeit.","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3)
+
+kable(tab,digits=1, row.names = F)
+
+```
+## Experience 2 : French newspapers - Top 10 regions
+
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="fr",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6)=="FRA", rnk < 11)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:10,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:10,c(3,4)]
+names(tab2)<-c(paste("Figaro","Region",sep="_"),paste("Figaro","pct",sep=" "))
+tab3<-res[11:20,c(3,4)]
+names(tab3)<-c(paste("Le Monde","Region",sep="_"),paste("Le Monde","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3)
+
+kable(tab,digits=1, row.names = F)
+
+```
+
+
+## Experience 2 : UK newspapers - Top 10 regions
+
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="en",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6)=="GBR", rnk < 11)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:10,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:10,c(3,4)]
+names(tab2)<-c(paste("Guardian","Region",sep="_"),paste("Guardian","pct",sep=" "))
+tab3<-res[11:20,c(3,4)]
+names(tab3)<-c(paste("Daily Telegraph","Region",sep="_"),paste("Daily Telegraph","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3)
+
+kable(tab,digits=1, row.names = F)
+
+```
+
+
+## Experience 2 : Irish newspapers - Top 10 regions
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="en",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6) %in% c("IRL","NIR"), rnk < 11)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:10,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:10,c(3,4)]
+names(tab2)<-c(paste("Irish Times","Region",sep="_"),paste("Irish Times","pct",sep=" "))
+tab3<-res[11:20,c(3,4)]
+names(tab3)<-c(paste("Belfast Telegraph","Region",sep="_"),paste("Belfast Telegraph","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3)
+
+kable(tab,digits=1, row.names = F)
+
+```
+
+
+## Experience 2 : Tunisian Newspapers- Top 5 regions
+
+Due to the limited number of news, only top 5 news is presented. The newspaper *Babnet* was in arabic language.
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="fr",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6) %in% c("TUN"), rnk < 6)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 6) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:5,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:5,c(3,4)]
+names(tab2)<-c(paste("Babnet (ar)","Region",sep="_"),paste("Babnet (ar)","pct",sep=" "))
+tab3<-res[6:10,c(3,4)]
+names(tab3)<-c(paste("Econ. Mag","Region",sep="_"),paste("Econ. Mag","pct",sep=" "))
+tab4<-res[11:15,c(3,4)]
+names(tab4)<-c(paste("La Presse","Region",sep="_"),paste("La Presse","pct",sep=" "))
+tab5<-res[16:20,c(3,4)]
+names(tab5)<-c(paste("Réalités","Region",sep="_"),paste("Réalités","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3,tab4,tab5)
+
+kable(tab,digits=1, row.names = F)
+
+```
+
+
+## Experience 2 : Correspondance analysis - Factor 1-2
+
+
+
+```{r}
+# Matrix
+reg_med <-hc_reg[where1 !="_no_",list(nb = sum(news)), list(where1, who)] %>%
+  dcast(formula = where1~who, value.var = "nb",fill = 0)
+mat<-as.matrix(reg_med[,-1])
+
+# Labels
+lab<-reg_med[,1] %>% rename(id=where1) %>% left_join(tab_def)
+
+# Row.names (choose the language you want !)
+row.names(mat)<-lab$en
+
+# Filter ambiguous units
+mat<-mat[row.names(mat) != "Americas",]
+mat<-mat[row.names(mat) != "Asia Minor",]
+mat<-mat[row.names(mat) != "Southern Africa",]
+
+
+# Select units > 20
+sel<-mat[apply(mat,1,sum)>20,]
+
+# Exclude units mentionned by less than 3 media
+sel <- sel[apply(sel>0,1,sum)>1,]
+
+
+afc <- CA(sel, graph = F)
+#explor(afc)
+
+res <- explor::prepare_results(afc)
+explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = "Contrib", size_range = c(52.5, 700), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-1.15,
+        1.94), ylim = c(-1.52, 1.56))
+```
+
+## Experience 2 :  Factors 3-4
+```{r}
+res <- explor::prepare_results(afc)
+explor::CA_var_plot(res, xax = 3, yax = 4, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = "Contrib", size_range = c(52.5, 700), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-1.76,
+        1.08), ylim = c(-1.38, 1.46))
+```
+
+## Experience 2 :  Cluster analysis(world regions)
+
+
+```{r}
+cah1 <- HCPC(afc,nb.clust = 5,graph = FALSE)
+plot.HCPC(cah1,choice="tree")
+```
+
+## Experience 2 :  Cluster analysis (medias)
+
+
+```{r}
+cah2 <- HCPC(afc,nb.clust = 5,graph = FALSE,cluster.CA = "columns")
+plot.HCPC(cah2,choice="tree")
+```
 
 
 
