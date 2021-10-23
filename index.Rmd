@@ -318,9 +318,11 @@ knitr::include_graphics("pics/Wikidata.png")
 The programs used for computer implementation are explained in the  **media cookbook** on [github](https://github.com/ClaudeGrasland/media_cookbook) with an example of implementation available onf the following [page](https://claudegrasland.github.io/media_cookbook/23-Wikidata.html)
 
 
-## 3. Q & D EXPERIMENTS
+## 3.EXPERIMENTS
 
-We have realized a test of the previous workflow on an **arbitraty selection of entities** which are mainly related to **continent and "natural" Earth divisions** :  
+We have realized a test of the previous workflow on an **arbitraty selection of 110 entities**  : 
+
+1. 65 entities  related to **continent and "natural" Earth divisions** :  
 
 - *continents* : Asia, Africa, Europa, ...
 - *subcontinents* : North Africa, Western Europe,..
@@ -329,7 +331,10 @@ We have realized a test of the previous workflow on an **arbitraty selection of 
 - *mountains/plain/...* : Alps, Balkans, Ands, ...
 - *Oceans/Seas/Gulf* : Atlantic, Arctic, Mediterranea, ...
 
-This **quick and dirty** analysis does not offer any guarantee of quality because :
+2.  45 **regional organizations** mentionned by Wikimedia : NATO, EU, CEI, NAFTA, ...
+
+
+Warning : This analysis does not offer perfect guarantee of quality because :
 
 1. The list of entities has not been discussed by the IMAGEUN's partners
 2. The dictionary established in the different languages has not been controled by native speakers
@@ -343,12 +348,14 @@ We start from a corpus of text where target wikipedia entities has been recogniz
 
 ```{r, warning=F}
 
-qd<-readRDS("quanteda/corpus_worldreg_001.RDS")
+qd<-readRDS("quanteda/corpus_worldreg_003.RDS")
 qd<-corpus_subset(qd,nbregs>0)
 td<-tidy(qd)
+td <-td[order(td$source),]
 td <-td[order(td$nbregs,decreasing = T),]
-kable(head(td,10))
+kable(td[c(1,2,40,63,83,73,79),])
 ```
+
 ## Experience 1 : An **Inter-**Language analysis of lexical universes
 
 ```{r, out.width="85%"}
@@ -356,12 +363,12 @@ knitr::include_graphics("pics/Experience1.png")
 ```
 
 
-## Experience 1 : Europe (Q46)  in  2019 
+## Experience 1 : Europe/EU (Q46 / Q458) 
 
 ```{r, out.width="40%"}
-ent = "Q46"
-year = 2019
-qd2<-corpus_subset(qd,str_count(regs,ent)>0 & substr(date,1,4)==year) 
+ent = c("Q46", "Q458")
+
+qd2<-corpus_subset(qd,str_count(regs,ent)>0 ) 
 
 
 lang="fr"
@@ -430,12 +437,11 @@ fcm_select(fcmat, pattern = feat) %>%
 
 ```
 
-## Experience 1 : Europe (Q46) in  2020 
+## Experience 1 : Africa (Q15)
 
 ```{r, out.width="40%"}
-ent = "Q46"
-year = 2020
-qd2<-corpus_subset(qd,str_count(regs,ent)>0 & substr(date,1,4)==year) 
+ent = "Q15"
+qd2<-corpus_subset(qd,str_count(regs,ent)>0 ) 
 
 
 lang="fr"
@@ -505,11 +511,10 @@ fcm_select(fcmat, pattern = feat) %>%
 
 
 
-## Experience 1 : Mediterranea (Q4918) in 2019-2021 
+## Experience 1 : Mediterranea (Q4918) 
 
 ```{r, out.width="40%"}
 ent = "Q4918"
-#year = 2020
 qd2<-corpus_subset(qd,str_count(regs,ent)>0 ) 
 
 
@@ -646,13 +651,13 @@ hc_reg <- hypercube(qd = qd,
                      who = "source",
                      where1 = "regs",
                      where2 = "regs")
-eliminate<-c("Q828", "Q12824780", "Q27394")
+eliminate<-c("Q828", "Q12824780", "Q27394", "Q7159")
 hc_reg<-hc_reg[!(where1 %in% eliminate),]
 
 sel<-hc_reg[where1=="Q46" & where2=="Q15",]
 kable(sel)
 
-reg_def<-readRDS("dict/worldreg001_def.RDS")
+reg_def<-readRDS("dict/worldreg003_def.RDS")
 tab_def<-dcast(reg_def, formula =id~lang, value.var="label")
 tab_def<-tab_def[ ,-c(2)]
 #kable(head(tab_def))
@@ -701,8 +706,8 @@ tab1<-res[1:10,2]
 names(tab1) <- c("Rank")
 tab2<-res[1:10,c(3,4)]
 names(tab2)<-c(paste("Cumhuryet","Region",sep="_"),paste("Cumhuryet","pct",sep=" "))
-tab3<-res[11:20,c(3,4)]
-names(tab3)<-c(paste("Yeni Savas","Region",sep="_"),paste("Yeni Savas","pct",sep=" "))
+tab3<-res[12:21,c(3,4)]
+names(tab3)<-c(paste("Yeni Savak","Region",sep="_"),paste("Yeni Savak","pct",sep=" "))
 tab<-cbind(tab1,tab2,tab3)
 
 kable(tab,digits=1, row.names = F)
@@ -868,7 +873,7 @@ kable(tab,digits=1, row.names = F)
 
 ## Experience 2 : Correspondance analysis - Factor 1-2
 
-
+N.B. We have eliminated the units "Americas", "Europe" and "European Union"
 
 ```{r}
 # Matrix
@@ -886,7 +891,8 @@ row.names(mat)<-lab$en
 mat<-mat[row.names(mat) != "Americas",]
 mat<-mat[row.names(mat) != "Asia Minor",]
 mat<-mat[row.names(mat) != "Southern Africa",]
-
+mat<-mat[row.names(mat) != "Europe",]
+mat<-mat[row.names(mat) != "European Union",]
 
 # Select units > 20
 sel<-mat[apply(mat,1,sum)>20,]
@@ -896,14 +902,16 @@ sel <- sel[apply(sel>0,1,sum)>1,]
 
 
 afc <- CA(sel, graph = F)
+#library(explor)
 #explor(afc)
 
 res <- explor::prepare_results(afc)
 explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
     var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
     symbol_var = NULL, size_var = "Contrib", size_range = c(52.5, 700), labels_size = 10,
-    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-1.15,
-        1.94), ylim = c(-1.52, 1.56))
+    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-2.02,
+        1.51), ylim = c(-1.67, 1.85))
+
 ```
 
 ## Experience 2 :  Factors 3-4
@@ -912,8 +920,8 @@ res <- explor::prepare_results(afc)
 explor::CA_var_plot(res, xax = 3, yax = 4, lev_sup = FALSE, var_sup = FALSE,
     var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
     symbol_var = NULL, size_var = "Contrib", size_range = c(52.5, 700), labels_size = 10,
-    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-1.76,
-        1.08), ylim = c(-1.38, 1.46))
+    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-2.17,
+        1.7), ylim = c(-1.86, 2.01))
 ```
 
 ## Experience 2 :  Cluster analysis(world regions)
