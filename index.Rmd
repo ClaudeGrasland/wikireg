@@ -224,12 +224,12 @@ We start from a corpus of text where target wikipedia entities has been recogniz
 
 ```{r, warning=F}
 
-qd<-readRDS("quanteda/corpus_worldreg_003.RDS")
+qd<-readRDS("quanteda/corpus_worldreg_004.RDS")
 qd<-corpus_subset(qd,nbregs>0)
 td<-tidy(qd)
 td <-td[order(td$source),]
 td <-td[order(td$nbregs,decreasing = T),]
-kable(td[c(1,2,40,63,83,73,79),])
+kable(td[c(1,2,5,7),])
 ```
 
 ## Experience 1 : An **Inter-**Language analysis of lexical universes
@@ -277,8 +277,8 @@ feat <- names(topfeatures(fcmat, 30))
 fcm_select(fcmat, pattern = feat) %>%
     textplot_network(min_freq = 0.2)
 
-lang="fr"
-country = "TUN"
+lang="ar"
+country = "DZA"
 mystop="french"
 sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
 toks <- sel %>%
@@ -312,77 +312,7 @@ fcm_select(fcmat, pattern = feat) %>%
 
 ```
 
-## Experience 1 : Africa (Q15)
 
-```{r, out.width="40%"}
-ent = "Q15"
-qd2<-corpus_subset(qd,str_count(regs,ent)>0 ) 
-
-
-lang="fr"
-country = "FRA"
-mystop="french"
-sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
-toks <- sel %>%
-    tokens(remove_punct = TRUE) %>%
-   tokens_split(separator="'") %>%
-    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
-     tokens_select(min_nchar = 3)
-fcmat <- fcm(toks, context = "window", tri = FALSE)
-feat <- names(topfeatures(fcmat, 30))
-fcm_select(fcmat, pattern = feat) %>%
-    textplot_network(min_freq = 0.2) 
-
-
-lang="de"
-country="DEU"
-mystop="german"
-year=2019
-sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country  )
-toks <- sel %>%
-    tokens(remove_punct = TRUE) %>%
-   tokens_split(separator="'") %>%
-    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
-     tokens_select(min_nchar = 3)
-fcmat <- fcm(toks, context = "window", tri = FALSE)
-feat <- names(topfeatures(fcmat, 30))
-fcm_select(fcmat, pattern = feat) %>%
-    textplot_network(min_freq = 0.2)
-
-lang="fr"
-country = "TUN"
-mystop="french"
-sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
-toks <- sel %>%
-    tokens(remove_punct = TRUE) %>%
-   tokens_split(separator="'") %>%
-    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
-     tokens_select(min_nchar = 3)
-fcmat <- fcm(toks, context = "window", tri = FALSE)
-feat <- names(topfeatures(fcmat, 30))
-fcm_select(fcmat, pattern = feat) %>%
-    textplot_network(min_freq = 0.2) 
-
-
-
-lang="tr"
-country="TUR"
-mystop="french"
-year= 2019
-
-sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country )
-toks <- sel %>%
-    tokens(remove_punct = TRUE) %>%
-   tokens_split(separator="'") %>%
-    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
-     tokens_select(min_nchar = 3)
-fcmat <- fcm(toks, context = "window", tri = FALSE)
-feat <- names(topfeatures(fcmat, 30))
-fcm_select(fcmat, pattern = feat) %>%
-    textplot_network(min_freq = 0.2)
-
-
-```
 
 ## Experience 1 : Mediterranea (Q4918)
 
@@ -420,8 +350,8 @@ feat <- names(topfeatures(fcmat, 30))
 fcm_select(fcmat, pattern = feat) %>%
     textplot_network(min_freq = 0.2)
 
-lang="fr"
-country = "TUN"
+lang="ar"
+country = "DZA"
 mystop="french"
 sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
 toks <- sel %>%
@@ -574,7 +504,7 @@ tab1<-res[1:10,2]
 names(tab1) <- c("Rank")
 tab2<-res[1:10,c(3,4)]
 names(tab2)<-c(paste("Cumhuryet","Region",sep="_"),paste("Cumhuryet","pct",sep=" "))
-tab3<-res[12:21,c(3,4)]
+tab3<-res[11:20,c(3,4)]
 names(tab3)<-c(paste("Yeni Savak","Region",sep="_"),paste("Yeni Savak","pct",sep=" "))
 tab<-cbind(tab1,tab2,tab3)
 
@@ -603,7 +533,7 @@ tab1<-res[1:10,2]
 names(tab1) <- c("Rank")
 tab2<-res[1:10,c(3,4)]
 names(tab2)<-c(paste("FAZ","Region",sep="_"),paste("FAZ","pct",sep=" "))
-tab3<-res[11:20,c(3,4)]
+tab3<-res[12:21,c(3,4)]
 names(tab3)<-c(paste("Süd. Zeit.","Region",sep="_"),paste("Süd. Zeit.","pct",sep=" "))
 tab<-cbind(tab1,tab2,tab3)
 
@@ -698,9 +628,9 @@ kable(tab,digits=1, row.names = F)
 
 ```
 
-## Experience 2 : Tunisian Newspapers- Top 5 regions
+## Experience 2 : Tunisian newspapers (top5)
 
-Due to the limited number of news, only top 5 news is presented. The newspaper *Babnet* was in arabic language.
+
 
 ```{r}
 
@@ -732,6 +662,40 @@ tab<-cbind(tab1,tab2,tab3,tab4,tab5)
 kable(tab,digits=1, row.names = F)
 
 ```
+## Algerian newspapers
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="fr",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6) %in% c("DZA"), rnk < 11)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:10,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:10,c(3,4)]
+names(tab2)<-c("Al Nahar (ar)","pct1")
+tab3<-res[11:20,c(3,4)]
+names(tab3)<-c("El Kahbar (ar)","pct2")
+tab4<-res[22:31,c(3,4)]
+names(tab4)<-c("El Watan (fr)","pct3")
+
+tab<-cbind(tab1,tab2,tab3,tab4)
+
+kable(tab,digits=c(0,1,1,1,1,1,1,1), row.names = F)
+
+```
+
+
+
 
 ## Experience 2 : Correspondance analysis - Factor 1-2
 
@@ -755,6 +719,9 @@ mat<-mat[row.names(mat) != "Asia Minor",]
 mat<-mat[row.names(mat) != "Southern Africa",]
 mat<-mat[row.names(mat) != "Europe",]
 mat<-mat[row.names(mat) != "European Union",]
+
+# filter elwatan
+mat<-mat[,colnames(mat) !="fr_DZA_elwata"]
 
 # Select units > 20
 sel<-mat[apply(mat,1,sum)>20,]
