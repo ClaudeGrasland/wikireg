@@ -1,0 +1,804 @@
+---
+title: "Cross-language analysis of world regions in the press"
+author: "Claude Grasland & Etienne Toureille"
+date: "19/10/2021"
+output:
+  slidy_presentation:
+    footer: "Imageun Project - Media Group - 2021"
+subtitle: An empirical approach based on Wikidata
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE)
+library(knitr)
+library(tidytext, quietly = TRUE)
+library(dplyr, quietly=TRUE)
+library(quanteda)
+library(quanteda.textplots)
+library(quanteda.textmodels)
+library(stringr)
+library(data.table)
+library(FactoMineR)
+```
+
+## 1. INTRODUCTION
+
+Previous analysis on german (*left*) and french (*right*) newspapers has demonstrated the interest to analyse **networks of states and world regions** :
+
+```{r,  out.width="50%"}
+knitr::include_graphics("pics/net_frankf_2014_2019.png")
+knitr::include_graphics("pics/net_lmonde_2014_2019.png")
+```
+
+But before to validate this results we need :
+
+1.  to clarify our **definition of world regions** and the associated list of target units.
+2.  to enlarge the dictionary to **other languages** (turkish, arabic, english)
+
+## Objectives
+
+The objective of this short note is to explore the possibility of **Wikidata** for the production of multilingual dictionaries of world regions and more generally regional imaginations. Different types of "regions" related to the division of the **Earth** ("natural") or the division of the **World** ("political")
+
+-   **"Earth/Natural regions"** : i.e. regions that are used in Atlas of Dictionaries for the localization at the surface on the earth and/or taught to young students in textbook as primary or secondary divisions of the surface of the Earth.
+
+-   **"World/Political regions"** : i.e. groups of states that are linked by formal international organization (e.g. European Union, ASEAN, ...) and/or are perceived as linked politically or economically by themselves of in the eye of external observers (e.g. BRICS, Eurasia).
+
+But the difference is not clear : see. @grataloup2011, @lewis2019, @copeaux1997, @brennetot2013
+
+## Earth/Natural regions: Atlas
+
+So-called "Physical maps" in Atlas are a good source :
+
+```{r,out.width="70%"}
+knitr::include_graphics("pics/Earthreg.png")
+```
+
+-   **continents** : Asia, Africa, Europa, ...
+-   **subcontinents** : North Africa, Western Europe,..
+-   **peninsula/ archipel/ ...** : Scandinavia, Caraïbes, ...
+-   **bioclimatic area** : Sahara, Amazonia, Sahel
+-   **mountains/plain/...** : Alps, Balkans, Ands, ...
+-   **Oceans/Seas/Gulf** : Atlantic, Arctic, Mediterranea
+
+## World/Political regions : IGO
+
+```{r,out.width="45%"}
+knitr::include_graphics("pics/Orgs_Map_1.png")
+knitr::include_graphics("pics/Orgs_Map_2.png")
+knitr::include_graphics("pics/Orgs_Map_3.png")
+knitr::include_graphics("pics/Orgs_Map_4.png")
+```
+
+Source : <https://commons.wikimedia.org/wiki/Atlas_of_international_organizations>
+
+## World/Political regions : Other ...
+
+```{r,out.width="45%"}
+knitr::include_graphics("pics/Huntington_1.png")
+knitr::include_graphics("pics/Huntington_2.png")
+knitr::include_graphics("pics/eurasia-map.jpg")
+knitr::include_graphics("pics/UPM carte.jpg")
+```
+
+## A cross-language perspective
+
+We propose to etablish a dictionary of Earth and World Regions in the five languages of interest for the project IMAGEUN :
+
+-   **english** : applied to media of UK and Ireland
+-   **french** : applied to media of France and Tunisia
+-   **german** : applied to media of Germany
+-   **turkish** : applied to media of Turkey
+-   **arabic** : applied to media of Tunisia
+
+We want to avoid any *"eurocentric"* or *"anglocentric"* perspective in the definition of entities. Therefore our definition of entities will follow the following rules :
+
+1.  **Non universal** : Entities will not necessary be available in all languages
+2.  **Non equivalent** : Translation of names does not imply equivalence of entities
+3.  **Non hierarchic** : An entity has different definitions in each language. None of the language can be considered as "pivot" or "reference".
+
+## Entities equivalences and lexical universes
+
+To summarize, we propose to build **partial equivalences** between entities that belong to **different lexical universes**.
+
+```{r,out.width="85%"}
+knitr::include_graphics("pics/Lexicuniv.png")
+
+```
+
+The comparison between lexical universes will be necessarily limited to a small sample of entities for which we can assume that the entities are approximately equivalent.
+
+## 2. WIKIDATA
+
+[Wikidata](https://www.wikidata.org/wiki/Wikidata:Main_Page) defines itself as
+
+-   a free and open knowledge base that can be read and edited by both humans and machines.
+-   as central storage for the structured data of its Wikimedia sister projects including Wikipedia, Wikivoyage, Wiktionary, Wikisource, and others.
+-   a support to many other sites and services beyond just Wikimedia projects.
+-   The content of Wikidata is available under a free license, exported using standard formats, and can be interlinked to other open data sets on the linked data web.
+
+## Codification of entities
+
+The first interest of wikidata is to provide unique code of identifications of objects. For example a research about "Africa" will produce a list of different objects characterized by a unique code :
+
+```{r,out.width="85%"}
+knitr::include_graphics("pics/Wikidata001.png")
+```
+
+## Informations on entities
+
+Once we have selected an entity (e.g. **Q15**) we obtain a new page with more detailed informations in english but also in all other languages available in Wikipedia.
+
+```{r,out.width="85%"}
+knitr::include_graphics("pics/Wikidata002.png")
+```
+
+## Informations on entities
+
+A lot of information are available concerning the entity but, at this stage, the most important ones for our research are :
+
+1.  the **translation** in different languages
+2.  the **equivalent** words or expression in different languages
+3.  the **definitions** in different languages
+4.  The existence of an **ambiguity of meaning**, for example homonymies..
+
+Wikidata data allows to formalize a procedure to build dictionaries and to objectify entity and translation choices between expert coders (us). It should lead to the construction of "specialized" dictionaries for the analysis of geographical entity, through discussion between the native speakers of the different languages in the project.
+
+## Multilanguage defintions
+
+The specificity of the wikidata ontology is the fact that it is a **multilinligual web** where Q15 is a **node of the web** present in different linguistic layers. It means that we don't have a single name or a single definition of Q15, except if we choose the english language as reference. Depending on the context (i.e. the language or sub-language), Q15 could be defined as :
+
+```{r}
+X1 <-c("fr",  "A *continent* named *Afrique*")
+
+X2 <- c("en", "A *continent on the Earth's northern and southern hemispheres* named *Africa* or *African continent*")
+
+X3 <- c("de", 'A *"Kontinent auf der Nord- und Südhalbkugel der Erde"* named *"Afrika"*')
+X4 <- c("tr",  'A *"Dünya nın kuzey ve güney yarıkürelerindeki bir kıta"* named *"Afrika"* or *"Afrika kıtası"*')
+X5 <- c("ar", 'The second largest continent in the world in terms of area and population, comes second only to Asia (trad.)')
+  
+ z<-data.frame(rbind(X1,X2,X3,X4, X5))
+ names(z)<- c("language", "definition")
+kable(z,row.names = F)
+ 
+```
+
+## Correspondance between entities ?
+
+The **existence of the same code of wikipedia entities does not offer any guarantee of concordance between the geographical objects found in news published in different languages or different countries**. But - and it is the important point - it help us to point similarities and differences between set of geographical entities that are more or less comparable in each language.
+
+-   **Ex. 1 Amazonie** : In french language, *Amazonie* is associated to the entity **Q2841453** which is defined as a *"région naturelle en Amérique du Sud"*. But this entity does not exist apparently in turkish language. At the same time the french language propose also an entity "*Forêt amazonienne*" **Q177567** defined as *forêt équatoriale située dans le bassin amazonien en Amérique du Sud* which is present in tukish language. We have also a third entity *bassin amazonien* identified as **Q244451** which refers to so-called *régions naturelles* based on water basin [@cholley1939]
+
+-   **Ex.2 Proche-Orient/Moyen-Orient/Pays du Golfe/ Asie de l'Ouest** : In french language we find four entities describing the complex geopolitical area located in western part of Asia and eastern part of Mediterranea. But this entities are not necessary used in all languages with the same frequency and can be completed by other entities like western Asia. The entity *Proche-Orient* (**Q48214**) which is frequent in french is only available in 30 languages when the *Moyen-Orient* (**Q7204**) is available in 84 languages, *golfe Persique* (**Q34675**) in 77 languages and *Asie de l'Ouest* (**Q27293**) in 71 languages.
+
+## Cross-language perspective
+
+Having in mind the limits of the equivalence of entities across languages, it can nevertheless be an interesting experience to select a set of wikipedia entities (**Q15, Q258, Q4412** ...) and to examine their relative frequency in our different media from different countries with different languages. A typical hypothesis could be something like :
+
+-   Is **Q15** more mentionned than **Q46** in Tunisian newspapers ?
+
+which is *not equivalent* to the question
+
+-   Is **Africa** more mentionned than **Europe** in Tunisian newspapers
+
+but rather equivalent to the two joint questions
+
+-   Is the textual unit **"Afrique"** more mentionned than the textual unit **"Europe"** in Tunisian newspapers published **in french language**.
+-   Is the textual unit **"إفريقيا"** more mentionned than the textual unit **"أوروبا"** in Tunisian newspapers published **in arabic language**.
+
+## Workflow in a nutschell
+
+We propose a **semi-automatic** method of extractions of entities in different languages that implies the presence of **human expert** at each step of the analysis. The figure below describe an example of research of world regions related to Africa in three languages.
+
+```{r, out.width="95%"}
+knitr::include_graphics("pics/Wikidata.png")
+```
+
+The programs used for computer implementation are explained in the **media cookbook** on [github](https://github.com/ClaudeGrasland/media_cookbook) with an example of implementation available onf the following [page](https://claudegrasland.github.io/media_cookbook/23-Wikidata.html)
+
+## 3.EXPERIMENTS
+
+We have realized a test of the previous workflow on an **arbitraty selection of 110 entities** :
+
+1.  65 entities related to **continent and "natural" Earth divisions** :
+
+-   *continents* : Asia, Africa, Europa, ...
+-   *subcontinents* : North Africa, Western Europe,..
+-   *peninsula/ archipel/ ...* : Scandinavia, Caraïbes, ...
+-   *bioclimatic area* : Sahara, Amazonia, Sahel
+-   *mountains/plain/...* : Alps, Balkans, Ands, ...
+-   *Oceans/Seas/Gulf* : Atlantic, Arctic, Mediterranea, ...
+
+2.  45 **regional organizations** mentionned by Wikimedia : NATO, EU, CEI, NAFTA, ...
+
+Warning : This analysis does not offer perfect guarantee of quality because :
+
+1.  The list of entities has not been discussed by the IMAGEUN's partners
+2.  The dictionary established in the different languages has not been controled by native speakers
+
+The purpose is therefore only to provide **food for thought**.
+
+## Data
+
+We start from a corpus of text where target wikipedia entities has been recognized :
+
+```{r, warning=F}
+
+qd<-readRDS("quanteda/corpus_worldreg_003.RDS")
+qd<-corpus_subset(qd,nbregs>0)
+td<-tidy(qd)
+td <-td[order(td$source),]
+td <-td[order(td$nbregs,decreasing = T),]
+kable(td[c(1,2,40,63,83,73,79),])
+```
+
+## Experience 1 : An **Inter-**Language analysis of lexical universes
+
+```{r, out.width="85%"}
+knitr::include_graphics("pics/Experience1.png")
+```
+
+## Experience 1 : Europe/EU (Q46 / Q458)
+
+```{r, out.width="40%"}
+ent = c("Q46", "Q458")
+
+qd2<-corpus_subset(qd,str_count(regs,ent)>0 ) 
+
+
+lang="fr"
+country = "FRA"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2) 
+
+
+
+lang="de"
+country="DEU"
+mystop="german"
+year=2019
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+lang="fr"
+country = "TUN"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2) 
+
+
+
+lang="tr"
+country="TUR"
+mystop="french"
+year= 2019
+
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+
+```
+
+## Experience 1 : Africa (Q15)
+
+```{r, out.width="40%"}
+ent = "Q15"
+qd2<-corpus_subset(qd,str_count(regs,ent)>0 ) 
+
+
+lang="fr"
+country = "FRA"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2) 
+
+
+lang="de"
+country="DEU"
+mystop="german"
+year=2019
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+lang="fr"
+country = "TUN"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2) 
+
+
+
+lang="tr"
+country="TUR"
+mystop="french"
+year= 2019
+
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+
+```
+
+## Experience 1 : Mediterranea (Q4918)
+
+```{r, out.width="40%"}
+ent = "Q4918"
+qd2<-corpus_subset(qd,str_count(regs,ent)>0 ) 
+
+
+lang="fr"
+country = "FRA"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+
+lang="de"
+country="DEU"
+mystop="german"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+lang="fr"
+country = "TUN"
+mystop="french"
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) %in% country  )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2) 
+
+
+
+lang="tr"
+country="TUR"
+mystop="french"
+year= 2019
+sel<-corpus_subset(qd2, substr(source,1,2)==lang & substr(source,4,6) == country )
+toks <- sel %>%
+    tokens(remove_punct = TRUE) %>%
+   tokens_split(separator="'") %>%
+    tokens_remove(pattern = stopwords(mystop), padding = FALSE) %>%
+     tokens_select(min_nchar = 3)
+fcmat <- fcm(toks, context = "window", tri = FALSE)
+feat <- names(topfeatures(fcmat, 30))
+fcm_select(fcmat, pattern = feat) %>%
+    textplot_network(min_freq = 0.2)
+
+
+```
+
+## Experience 2 : A **Cross-**Language analysis of regional entities
+
+```{r, out.width="85%"}
+knitr::include_graphics("pics/Experience2.png")
+```
+
+## Experience 2 : Data aggregation
+
+For the experience 2, we create a new object called **hypercube** where the text of news has been removed and where we keep only the number of *tags* or proportion of *news* speaking from one or several regions (*where1*, *where2*), by media (*who*) and by time period (*when*)
+
+```{r}
+
+
+hypercube <-function(qd = qd,
+                     when = "date",
+                     when_cut = "year",
+                     who = "source",
+                     where1 = "tags",
+                     where2 = "tags")
+                     
+  {   
+
+# create data.table accroding to parameter chosen
+  don<-docvars(qd)
+
+  df<-data.table(id = docid(qd),
+                 who = don[,who],
+                 when = as.character(cut(don[,when],breaks=when_cut)),
+                 where1 = don[,where1],
+                 where2 = don[,where2])
+
+
+
+# add code _no_ for empty fields
+df$where1[df$where1==""]<-"_no_"
+df$where2[df$where2==""]<-"_no_"
+
+
+# unnest where1
+  df<-unnest_tokens(df,where1,where1,to_lower=F)
+  
+# unnest where2
+  df<-unnest_tokens(df,where2,where2,to_lower=F)  
+  
+# define number of occurence by id
+  nb<-df[,.N,list(id)] %>%  mutate(wgt = 1/N) %>% select(-N)
+  df<-df %>% left_join(nb) 
+  
+  rm(nb)
+ 
+# Aggregate
+  hc<- df[,.( tags = .N, news=sum(wgt)) ,.(who, when,where1,where2)]
+  
+# Convert date to time
+  hc$when<-as.Date(hc$when)
+  
+# return hypercube
+  return(hc)
+
+}
+
+
+
+hc_reg <- hypercube(qd = qd,
+                     when = "date",
+                     when_cut = "year",
+                     who = "source",
+                     where1 = "regs",
+                     where2 = "regs")
+eliminate<-c("Q828", "Q12824780", "Q27394", "Q7159")
+hc_reg<-hc_reg[!(where1 %in% eliminate),]
+
+sel<-hc_reg[where1=="Q46" & where2=="Q15",]
+kable(sel)
+
+reg_def<-readRDS("dict/worldreg003_def.RDS")
+tab_def<-dcast(reg_def, formula =id~lang, value.var="label")
+tab_def<-tab_def[ ,-c(2)]
+#kable(head(tab_def))
+
+```
+
+## Experience 2 : Top 20 regions in full corpus
+
+We can propose firstly a table of top entities in the whole corpus of newspapers.
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(where1)] 
+df<-merge(tab_def,df,by.x="id",by.y="where1",all.x=F,all.y=T)
+df<-df[order(df$nb, decreasing = T),]
+row.names(df)<-1:dim(df)[1]
+
+kable(head(df,20), digits=0,row.names = T)
+```
+
+-   **NB** : all the names are present in the different languages in order to avoid *eurocentrism* or *anglocentrism*.
+
+## Experience 2 : Turkish newspapers - Top 10 regions
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="tr",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6)=="TUR", rnk < 11)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:10,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:10,c(3,4)]
+names(tab2)<-c(paste("Cumhuryet","Region",sep="_"),paste("Cumhuryet","pct",sep=" "))
+tab3<-res[12:21,c(3,4)]
+names(tab3)<-c(paste("Yeni Savak","Region",sep="_"),paste("Yeni Savak","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3)
+
+kable(tab,digits=1, row.names = F)
+
+```
+
+## Experience 2 : German newspapers - Top 10 regions
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="de",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6)=="DEU", rnk < 11)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:10,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:10,c(3,4)]
+names(tab2)<-c(paste("FAZ","Region",sep="_"),paste("FAZ","pct",sep=" "))
+tab3<-res[11:20,c(3,4)]
+names(tab3)<-c(paste("Süd. Zeit.","Region",sep="_"),paste("Süd. Zeit.","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3)
+
+kable(tab,digits=1, row.names = F)
+
+```
+
+## Experience 2 : French newspapers - Top 10 regions
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="fr",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6)=="FRA", rnk < 11)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:10,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:10,c(3,4)]
+names(tab2)<-c(paste("Figaro","Region",sep="_"),paste("Figaro","pct",sep=" "))
+tab3<-res[11:20,c(3,4)]
+names(tab3)<-c(paste("Le Monde","Region",sep="_"),paste("Le Monde","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3)
+
+kable(tab,digits=1, row.names = F)
+
+```
+
+## Experience 2 : UK newspapers - Top 10 regions
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="en",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6)=="GBR", rnk < 11)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:10,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:10,c(3,4)]
+names(tab2)<-c(paste("Guardian","Region",sep="_"),paste("Guardian","pct",sep=" "))
+tab3<-res[11:20,c(3,4)]
+names(tab3)<-c(paste("Daily Telegraph","Region",sep="_"),paste("Daily Telegraph","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3)
+
+kable(tab,digits=1, row.names = F)
+
+```
+
+## Experience 2 : Irish newspapers - Top 10 regions
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="en",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6) %in% c("IRL","NIR"), rnk < 11)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:10,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:10,c(3,4)]
+names(tab2)<-c(paste("Irish Times","Region",sep="_"),paste("Irish Times","pct",sep=" "))
+tab3<-res[11:20,c(3,4)]
+names(tab3)<-c(paste("Belfast Telegraph","Region",sep="_"),paste("Belfast Telegraph","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3)
+
+kable(tab,digits=1, row.names = F)
+
+```
+
+## Experience 2 : Tunisian Newspapers- Top 5 regions
+
+Due to the limited number of news, only top 5 news is presented. The newspaper *Babnet* was in arabic language.
+
+```{r}
+
+# Compute
+df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
+     group_by(who) %>%
+     filter(where1 != "Q828")%>%
+     mutate(pct = 100*nb/sum(nb),
+            rnk = rank(-nb))
+
+reg_def_sel<-reg_def[reg_def$lang=="fr",c(1,3)]
+df_sel <- df %>% filter(substr(who,4,6) %in% c("TUN"), rnk < 6)
+df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+res <- df_sel %>% filter(rnk < 6) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
+res<-res[order(res$who, res$rnk),]
+tab1<-res[1:5,2]
+names(tab1) <- c("Rank")
+tab2<-res[1:5,c(3,4)]
+names(tab2)<-c(paste("Babnet (ar)","Region",sep="_"),paste("Babnet (ar)","pct",sep=" "))
+tab3<-res[6:10,c(3,4)]
+names(tab3)<-c(paste("Econ. Mag","Region",sep="_"),paste("Econ. Mag","pct",sep=" "))
+tab4<-res[11:15,c(3,4)]
+names(tab4)<-c(paste("La Presse","Region",sep="_"),paste("La Presse","pct",sep=" "))
+tab5<-res[16:20,c(3,4)]
+names(tab5)<-c(paste("Réalités","Region",sep="_"),paste("Réalités","pct",sep=" "))
+tab<-cbind(tab1,tab2,tab3,tab4,tab5)
+
+kable(tab,digits=1, row.names = F)
+
+```
+
+## Experience 2 : Correspondance analysis - Factor 1-2
+
+N.B. We have eliminated the units "Americas", "Europe" and "European Union"
+
+```{r}
+# Matrix
+reg_med <-hc_reg[where1 !="_no_",list(nb = sum(news)), list(where1, who)] %>%
+  dcast(formula = where1~who, value.var = "nb",fill = 0)
+mat<-as.matrix(reg_med[,-1])
+
+# Labels
+lab<-reg_med[,1] %>% rename(id=where1) %>% left_join(tab_def)
+
+# Row.names (choose the language you want !)
+row.names(mat)<-lab$en
+
+# Filter ambiguous units
+mat<-mat[row.names(mat) != "Americas",]
+mat<-mat[row.names(mat) != "Asia Minor",]
+mat<-mat[row.names(mat) != "Southern Africa",]
+mat<-mat[row.names(mat) != "Europe",]
+mat<-mat[row.names(mat) != "European Union",]
+
+# Select units > 20
+sel<-mat[apply(mat,1,sum)>20,]
+
+# Exclude units mentionned by less than 3 media
+sel <- sel[apply(sel>0,1,sum)>1,]
+
+
+afc <- CA(sel, graph = F)
+#library(explor)
+#explor(afc)
+
+res <- explor::prepare_results(afc)
+explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = "Contrib", size_range = c(52.5, 700), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-2.02,
+        1.51), ylim = c(-1.67, 1.85))
+
+```
+
+## Experience 2 : Factors 3-4
+
+```{r}
+res <- explor::prepare_results(afc)
+explor::CA_var_plot(res, xax = 3, yax = 4, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = "Contrib", size_range = c(52.5, 700), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-2.17,
+        1.7), ylim = c(-1.86, 2.01))
+```
+
+## Experience 2 : Cluster analysis(world regions)
+
+```{r}
+cah1 <- HCPC(afc,nb.clust = 5,graph = FALSE)
+plot.HCPC(cah1,choice="tree")
+```
+
+## Experience 2 : Cluster analysis (medias)
+
+```{r}
+cah2 <- HCPC(afc,nb.clust = 5,graph = FALSE,cluster.CA = "columns")
+plot.HCPC(cah2,choice="tree")
+```
+
+## Bibliography
