@@ -224,12 +224,26 @@ We start from a corpus of text where target wikipedia entities has been recogniz
 
 ```{r, warning=F}
 
-qd<-readRDS("quanteda/corpus_worldreg_004.RDS")
+qd<-readRDS("quanteda/corpus_worldgeo_001.RDS")
+qd<-corpus_subset(qd,nbtags>0)
+
+qd$regs<-gsub("ST_...","",qd$tags)
+qd$regs<-gsub("CA_...","",qd$regs)
+qd$nbregs<-ntoken(tokens(as.character(qd$regs)))
 qd<-corpus_subset(qd,nbregs>0)
+
 td<-tidy(qd)
-td <-td[order(td$source),]
-td <-td[order(td$nbregs,decreasing = T),]
+td <-td[order(td$nbregs,decreasing = T),c(1,2,3,6,7)]
 kable(td[c(1,2,5,7),])
+
+reg_def<-readRDS("dict/worldgeo_def_V1.RDS")
+tab_def<-reg_def %>% filter(lang=="en") %>% select(code,type,label)
+#reg_def<-reg_def[complete.cases(reg_def),]
+#reg_def<-unique(reg_def)
+#tab_def<-dcast(reg_def, formula = code~lang, value.var="label")
+#tab_def<-tab_def[ ,-c(2)]
+#kable(head(tab_def))
+
 ```
 
 ## Experience 1 : An **Inter-**Language analysis of lexical universes
@@ -241,7 +255,7 @@ knitr::include_graphics("pics/Experience1.png")
 ## Experience 1 : Europe/EU (Q46 / Q458)
 
 ```{r, out.width="40%"}
-ent = c("Q46", "Q458")
+ent = c("OR_EU", "CO_EUR")
 
 qd2<-corpus_subset(qd,str_count(regs,ent)>0 ) 
 
@@ -315,7 +329,7 @@ fcm_select(fcmat, pattern = feat) %>%
 ## Experience 1 : Mediterranea (Q4918)
 
 ```{r, out.width="40%"}
-ent = "Q4918"
+ent = "SE_medit"
 qd2<-corpus_subset(qd,str_count(regs,ent)>0 ) 
 
 
@@ -451,15 +465,13 @@ hc_reg <- hypercube(qd = qd,
                      who = "source",
                      where1 = "regs",
                      where2 = "regs")
-eliminate<-c("Q828", "Q12824780", "Q27394", "Q7159")
-hc_reg<-hc_reg[!(where1 %in% eliminate),]
+#eliminate<-c("CO_EUR", "OR_EU" )
+#hc_reg<-hc_reg[!(where1 %in% eliminate),]
 
-sel<-hc_reg[where1=="Q46" & where2=="Q15",]
-kable(sel)
 
-reg_def<-readRDS("dict/worldreg003_def.RDS")
-tab_def<-dcast(reg_def, formula =id~lang, value.var="label")
-tab_def<-tab_def[ ,-c(2)]
+#reg_def<-readRDS("dict/worldreg003_def.RDS")
+#tab_def<-dcast(reg_def, formula =id~lang, value.var="label")
+#tab_def<-tab_def[ ,-c(2)]
 #kable(head(tab_def))
 
 ```
@@ -472,7 +484,7 @@ We can propose firstly a table of top entities in the whole corpus of newspapers
 
 # Compute
 df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(where1)] 
-df<-merge(tab_def,df,by.x="id",by.y="where1",all.x=F,all.y=T)
+df<-merge(tab_def,df,by.x="code",by.y="where1",all.x=F,all.y=T)
 df<-df[order(df$nb, decreasing = T),]
 row.names(df)<-1:dim(df)[1]
 
@@ -488,13 +500,13 @@ kable(head(df,20), digits=0,row.names = T)
 # Compute
 df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>% 
      group_by(who) %>%
-     filter(where1 != "Q828")%>%
+#     filter(where1 != "Q828")%>%
      mutate(pct = 100*nb/sum(nb),
             rnk = rank(-nb))
 
-reg_def_sel<-reg_def[reg_def$lang=="tr",c(1,3)]
 df_sel <- df %>% filter(substr(who,4,6)=="TUR", rnk < 11)
-df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+df_sel<-merge(df_sel,tab_def,by.x="where1",by.y="code")
+
 
 res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
 res<-res[order(res$who, res$rnk),]
@@ -521,9 +533,8 @@ df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>%
      mutate(pct = 100*nb/sum(nb),
             rnk = rank(-nb))
 
-reg_def_sel<-reg_def[reg_def$lang=="de",c(1,3)]
 df_sel <- df %>% filter(substr(who,4,6)=="DEU", rnk < 11)
-df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+df_sel<-merge(df_sel,tab_def,by.x="where1",by.y="code")
 
 res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
 res<-res[order(res$who, res$rnk),]
@@ -531,7 +542,7 @@ tab1<-res[1:10,2]
 names(tab1) <- c("Rank")
 tab2<-res[1:10,c(3,4)]
 names(tab2)<-c(paste("FAZ","Region",sep="_"),paste("FAZ","pct",sep=" "))
-tab3<-res[12:21,c(3,4)]
+tab3<-res[11:20,c(3,4)]
 names(tab3)<-c(paste("Süd. Zeit.","Region",sep="_"),paste("Süd. Zeit.","pct",sep=" "))
 tab<-cbind(tab1,tab2,tab3)
 
@@ -550,9 +561,8 @@ df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>%
      mutate(pct = 100*nb/sum(nb),
             rnk = rank(-nb))
 
-reg_def_sel<-reg_def[reg_def$lang=="fr",c(1,3)]
 df_sel <- df %>% filter(substr(who,4,6)=="FRA", rnk < 11)
-df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+df_sel<-merge(df_sel,tab_def,by.x="where1",by.y="code")
 
 res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
 res<-res[order(res$who, res$rnk),]
@@ -579,9 +589,8 @@ df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>%
      mutate(pct = 100*nb/sum(nb),
             rnk = rank(-nb))
 
-reg_def_sel<-reg_def[reg_def$lang=="en",c(1,3)]
 df_sel <- df %>% filter(substr(who,4,6)=="GBR", rnk < 11)
-df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+df_sel<-merge(df_sel,tab_def,by.x="where1",by.y="code")
 
 res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
 res<-res[order(res$who, res$rnk),]
@@ -608,9 +617,8 @@ df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>%
      mutate(pct = 100*nb/sum(nb),
             rnk = rank(-nb))
 
-reg_def_sel<-reg_def[reg_def$lang=="en",c(1,3)]
 df_sel <- df %>% filter(substr(who,4,6) %in% c("IRL","NIR"), rnk < 11)
-df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+df_sel<-merge(df_sel,tab_def,by.x="where1",by.y="code")
 
 res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
 res<-res[order(res$who, res$rnk),]
@@ -637,9 +645,9 @@ df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>%
      mutate(pct = 100*nb/sum(nb),
             rnk = rank(-nb))
 
-reg_def_sel<-reg_def[reg_def$lang=="fr",c(1,3)]
-df_sel <- df %>% filter(substr(who,4,6) %in% c("TUN"), rnk < 6)
-df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+
+df_sel <- df %>% filter(substr(who,4,6)=="TUN", rnk < 11)
+df_sel<-merge(df_sel,tab_def,by.x="where1",by.y="code")
 
 res <- df_sel %>% filter(rnk < 6) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
 res<-res[order(res$who, res$rnk),]
@@ -670,9 +678,8 @@ df<-hc_reg[where1 !="_no_",list(nb = sum(news)), list(who, where1)] %>%
      mutate(pct = 100*nb/sum(nb),
             rnk = rank(-nb))
 
-reg_def_sel<-reg_def[reg_def$lang=="fr",c(1,3)]
-df_sel <- df %>% filter(substr(who,4,6) %in% c("DZA"), rnk < 11)
-df_sel<-merge(df_sel,reg_def_sel,by.x="where1",by.y="id")
+df_sel <- df %>% filter(substr(who,4,6)=="DZA", rnk < 11)
+df_sel<-merge(df_sel,tab_def,by.x="where1",by.y="code")
 
 res <- df_sel %>% filter(rnk < 11) %>% select(who, rnk,label, pct) %>% mutate(who=substr(who,4,12))
 res<-res[order(res$who, res$rnk),]
@@ -702,17 +709,17 @@ reg_med <-hc_reg[where1 !="_no_",list(nb = sum(news)), list(where1, who)] %>%
 mat<-as.matrix(reg_med[,-1])
 
 # Labels
-lab<-reg_med[,1] %>% rename(id=where1) %>% left_join(tab_def)
-
+lab<-reg_med[,1] %>% rename(code=where1) %>% unique()
+lab<-merge(lab,tab_def,all.x=T,all.y=F) %>% filter(duplicated(code)==F)
 # Row.names (choose the language you want !)
-row.names(mat)<-lab$en
+row.names(mat)<-lab$label
 
 # Filter ambiguous units
-mat<-mat[row.names(mat) != "Americas",]
-mat<-mat[row.names(mat) != "Asia Minor",]
-mat<-mat[row.names(mat) != "Southern Africa",]
-mat<-mat[row.names(mat) != "Europe",]
-mat<-mat[row.names(mat) != "European Union",]
+#mat<-mat[row.names(mat) != "Americas",]
+#mat<-mat[row.names(mat) != "Asia Minor",]
+#mat<-mat[row.names(mat) != "Southern Africa",]
+#mat<-mat[row.names(mat) != "Europe",]
+#mat<-mat[row.names(mat) != "European Union",]
 
 # filter elwatan
 mat<-mat[,colnames(mat) !="fr_DZA_elwata"]
@@ -731,7 +738,7 @@ afc <- CA(sel, graph = F)
 res <- explor::prepare_results(afc)
 explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
     var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
-    symbol_var = NULL, size_var = "Contrib", size_range = c(52.5, 700), labels_size = 10,
+    symbol_var = NULL, size_var = "Contrib", size_range = c(52.5, 700), labels_size = 8,
     point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-2.02,
         1.51), ylim = c(-1.67, 1.85))
 
@@ -743,7 +750,7 @@ explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
 res <- explor::prepare_results(afc)
 explor::CA_var_plot(res, xax = 3, yax = 4, lev_sup = FALSE, var_sup = FALSE,
     var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
-    symbol_var = NULL, size_var = "Contrib", size_range = c(52.5, 700), labels_size = 10,
+    symbol_var = NULL, size_var = "Contrib", size_range = c(52.5, 700), labels_size = 8,
     point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-2.17,
         1.7), ylim = c(-1.86, 2.01))
 ```
@@ -758,7 +765,7 @@ plot.HCPC(cah1,choice="tree")
 ## Experience 2 : Cluster analysis (medias)
 
 ```{r}
-cah2 <- HCPC(afc,nb.clust = 5,graph = FALSE,cluster.CA = "columns")
+cah2 <- HCPC(afc,nb.clust = 7,graph = FALSE,cluster.CA = "columns")
 plot.HCPC(cah2,choice="tree")
 ```
 
