@@ -1,0 +1,159 @@
+---
+title: "Grammar of regions"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE)
+library(knitr)
+library(tidytext, quietly = TRUE)
+library(dplyr, quietly=TRUE)
+library(quanteda)
+library(quanteda.textplots)
+library(quanteda.textmodels)
+library(stringr)
+library(data.table)
+library(FactoMineR)
+library(spacyr)
+```
+
+
+# DATA
+
+## A multinational corpus
+We load a multilanguage quanteda corpus where states and world region has been identified on the basis of wikipedia entities. This solution is preliminary but sufficient to identify the news of interest.
+
+```{r, warning=F}
+
+qd<-readRDS("quanteda/corpus_worldgeo_001.RDS")
+qd<-corpus_subset(qd,nbtags>0)
+
+qd$regs<-gsub("ST_...","",qd$tags)
+qd$regs<-gsub("CA_...","",qd$regs)
+qd$nbregs<-ntoken(tokens(as.character(qd$regs)))
+qd<-corpus_subset(qd,nbregs>0)
+
+
+
+```
+
+
+## Extraction of the french corpus
+
+We extract the news written in french language and replace "Union Européenne" by "UE"
+
+```{r}
+qd_fr<-corpus_subset(qd,substr(source,1,6)=="fr_FRA")
+qd_fr<-gsub("Union européenne","UE",qd_fr)
+qd_fr<-gsub("Union Européenne","UE",qd_fr)
+td<-tidy(qd_fr)[,c(1,2,3,6,7)]
+kable(head(td))
+```
+
+
+
+# Annotation
+
+
+## Load Spacyr
+
+```{r}
+library(spacyr)
+library(quanteda)
+#spacy_finalize()
+#spacy_install(lang_models = c("fr_core_news_lg"), prompt = FALSE)
+spacy_initialize(model="fr_core_news_lg")
+
+```
+
+## Parse 
+
+We transform the quanteda corpus in anotated object. This can take a few minutes
+
+```{r}
+ps<-spacy_parse(qd_fr, tag = TRUE,entity = TRUE, dependency=TRUE)
+head(ps)
+```
+## Add metadata
+
+```{r}
+doc<-docvars(qd_fr)
+doc$doc_id<-docid(qd_fr) 
+doc<-doc %>% select(doc_id,source,date)
+ps<-left_join(ps,doc)
+```
+
+
+# Analyze functions of Europe /UE
+
+## UE as subject
+
+```{r}
+library(tidyr)
+mytoken<-"UE"
+sel<- ps %>% filter(token==mytoken & dep_rel=="nsubj") %>% select(doc_id,sentence_id,tok1=token_id,tok2=head_token_id)
+ps_eur_subj<-inner_join(ps,sel) %>% group_by(doc_id,sentence_id) %>% 
+#  filter(token_id==tok2  | token_id==tok1 |head_token_id==tok2  | head_token_id==tok1) %>% filter(token !=mytoken) %>%
+  filter(pos %in% c("VERB"))
+
+
+x<-ps_eur_subj %>% group_by(lemma,source) %>% summarize( nb=n()) %>% 
+               pivot_wider(names_from = source,values_from = nb,values_fill = 0) %>%
+               left_join(ps_eur_subj %>% group_by(lemma)%>% summarize(tot=n())) %>%
+              arrange(-tot)
+
+head(x,10)
+```
+
+## Europe as subject
+
+```{r}
+mytoken<-"Europe"
+sel<- ps %>% filter(token==mytoken & dep_rel=="nsubj") %>% select(doc_id,sentence_id,tok1=token_id,tok2=head_token_id)
+ps_eur_subj<-inner_join(ps,sel) %>% group_by(doc_id,sentence_id) %>% 
+#  filter(token_id==tok2  | token_id==tok1 |head_token_id==tok2  | head_token_id==tok1) %>% filter(token !=mytoken) %>%
+  filter(pos %in% c("VERB"))
+
+
+x<-ps_eur_subj %>% group_by(lemma,source) %>% summarize( nb=n()) %>% 
+               pivot_wider(names_from = source,values_from = nb,values_fill = 0) %>%
+               left_join(ps_eur_subj %>% group_by(lemma)%>% summarize(tot=n())) %>%
+              arrange(-tot)
+
+head(x,10)
+```
+## UE as object
+
+```{r}
+mytoken<-"UE"
+sel<- ps %>% filter(token==mytoken & dep_rel %in% c("obj", "nsubj:pass")) %>% select(doc_id,sentence_id,tok1=token_id,tok2=head_token_id)
+ps_eur_obj<-inner_join(ps,sel) %>% group_by(doc_id,sentence_id) %>% 
+#  filter(token_id==tok2  | token_id==tok1 |head_token_id==tok2  | head_token_id==tok1) %>%
+  filter(token !=mytoken) %>% filter(pos %in% c("VERB"))
+
+x<-ps_eur_obj %>% group_by(lemma,source) %>% summarize( nb=n()) %>% 
+               pivot_wider(names_from = source,values_from = nb,values_fill = 0) %>%
+               left_join(ps_eur_obj %>% group_by(lemma)%>% summarize(tot=n())) %>%
+              arrange(-tot)
+
+head(x,20)
+```
+
+## Europe as object
+
+```{r}
+mytoken<-"Europe"
+sel<- ps %>% filter(token==mytoken & dep_rel %in% c("obj", "nsubj:pass")) %>% select(doc_id,sentence_id,tok1=token_id,tok2=head_token_id)
+ps_eur_obj<-inner_join(ps,sel) %>% group_by(doc_id,sentence_id) %>% 
+#  filter(token_id==tok2  | token_id==tok1 |head_token_id==tok2  | head_token_id==tok1) %>%
+  filter(token !=mytoken) %>% filter(pos %in% c("VERB"))
+
+x<-ps_eur_obj %>% group_by(lemma,source) %>% summarize( nb=n()) %>% 
+               pivot_wider(names_from = source,values_from = nb,values_fill = 0) %>%
+               left_join(ps_eur_obj %>% group_by(lemma)%>% summarize(tot=n())) %>%
+              arrange(-tot)
+
+head(x,20)
+```
+
+
